@@ -6,7 +6,7 @@
 const HASHTAG_LIST = ['Shadowverse', 'シャドバ', 'シャドウバース', '2pick'];
 
 // ミュートハッシュタグリスト（タイトル、ハッシュタグ、作者名に対して）
-const MUTE_WORDS = ['シャドウバースエボルヴ', 'Shadowverse_EVOLVE'];
+const MUTE_HSSHTAG_LIST = ['シャドウバースエボルヴ', 'Shadowverse_EVOLVE'];
 
 // Twitter API設定（OAuth2 Bearer Token）
 const BEARER_TOKEN = PropertiesService.getScriptProperties().getProperty("YOUR_BEARER_TOKEN");
