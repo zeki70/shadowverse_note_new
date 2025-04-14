@@ -11,6 +11,7 @@ const MUTE_HSSHTAG_LIST = ['シャドウバースエボルヴ', 'Shadowverse_EVO
 // Twitter API設定（OAuth2 Bearer Token）
 const BEARER_TOKEN = PropertiesService.getScriptProperties().getProperty("YOUR_BEARER_TOKEN");
 
+const ID_list = new Set(); // 記事IDを格納するセット
 // ===========================
 // メイン処理
 // ===========================
@@ -43,4 +44,15 @@ function extractArticleIds(html) {
   Logger.log(articleIds);
   var sheet = SpreadsheetApp.openById(Spreadsheet_ID).getSheetByName("シート1");  // シートを直接指定
   sheet.appendRow(articleIds);
+}
+
+function get_article_ID() {
+    for (i in HASHTAG_LIST) {
+        var hashtag = HASHTAG_LIST[i];
+        var html_list = scrapeHtml(hashtag);
+        check_article_ID(html_list);
+    }
+}
+
+function check_article_ID() {
 }
