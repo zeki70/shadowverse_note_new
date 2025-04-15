@@ -8,10 +8,12 @@ const HASHTAG_LIST = ['Shadowverse', 'シャドバ', 'シャドウバース', '2
 // ミュートハッシュタグリスト（タイトル、ハッシュタグ、作者名に対して）
 const MUTE_HSSHTAG_LIST = ['シャドウバースエボルヴ', 'Shadowverse_EVOLVE'];
 
+const MUTE_USER_LIST = []
+
 // Twitter API設定（OAuth2 Bearer Token）
 const BEARER_TOKEN = PropertiesService.getScriptProperties().getProperty("YOUR_BEARER_TOKEN");
 
-const ID_list = new Set(); // 記事IDを格納するセット
+const Article_ID_list = new Set(); // 記事IDを格納するセット
 // ===========================
 // メイン処理
 // ===========================
@@ -54,5 +56,19 @@ function get_article_ID() {
     }
 }
 
-function check_article_ID() {
+function check_article_ID(list) {
+    for (i in list){
+        var article_elements = list[i];
+        if (MUTE_USER_LIST.includes(article_elements[0])){
+            continue
+        }
+        var hashtag_url = `https://note.com/api/v3/notes/${article_elements[1]}`;
+        let jsonArticleInfo = UrlFetchApp.fetch(hashtag_url, {'method':'get'});
+        var parsedData = JSON.parse(jsonArticleInfo);
+        var hashtags = parsedData.data.hashtag_notes;
+        if (MUTE_HSSHTAG_LIST.includes(hashtags)){
+            continue
+        }
+        Article_ID_list.add(article_elements[1]);
+    }
 }
