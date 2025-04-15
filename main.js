@@ -48,7 +48,7 @@ function extractArticleIds(html) {
   sheet.appendRow(articleIds);
 }
 
-function get_article_ID() {
+function get_article_ID() {// 記事IDを取得する関数
     for (i in HASHTAG_LIST) {
         var hashtag = HASHTAG_LIST[i];
         var html_list = scrapeHtml(hashtag);
@@ -56,7 +56,7 @@ function get_article_ID() {
     }
 }
 
-function check_article_ID(list) {
+function check_article_ID(list) {// 記事IDをチェックしミュートリストに無かったら送信用リストに追加する
     for (i in list){
         var article_elements = list[i];
         if (MUTE_USER_LIST.includes(article_elements[0])){
