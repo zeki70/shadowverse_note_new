@@ -4,11 +4,11 @@
     "runtimeVersion": "V8",
     "dependencies": {
       "libraries": [
+        
         {
-          "userSymbol": "Parser",
-          "version": "8",
-          "libraryId": "1Mc8BthYthXx6CoIz90-JiSzSafVnT6U3t0z_W3hLTAX5ek4w0G_EIrNw",
-          "developmentMode": true
+          "userSymbol": "OAuth2",
+          "version": "43",
+          "libraryId": "1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF"
         }
       ]
     }
