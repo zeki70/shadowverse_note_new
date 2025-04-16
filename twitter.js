@@ -59,3 +59,41 @@ function postTweet(text) {
 
   Logger.log(response.getContentText());
 }
+
+check_limit(article_ID_list){
+    var limit_list = cache.get("limit");
+    var last_article_ID_list = caches.get("article_ID_list");
+    var date = new Date();
+    var today = date.getDate();
+    if(limit_list == null){
+        limit_list = [today, 17]; // 初期化
+    }
+    if(limit_list[0] != today){
+        limit_list[0] = today;
+        limit_list[1] = 17;
+    }
+    if(limit_list[1] == 0){
+        cache.put("limit", limit_list, 21600); // 6時間キャッシュ
+        caches.put("article_ID_list", article_ID_list, 21600); // 6時間キャッシュ
+        return true;
+    }
+    for(i in article_ID_list){
+        if(limit_list[1] == 0){
+            cache.put("limit", limit_list, 21600); // 6時間キャッシュ
+            caches.put("article_ID_list", article_ID_list, 21600); // 6時間キャッシュ
+            return true;
+        }
+        if (last_article_ID_list.includes(article_ID_list[i])){
+            continue
+        } else {
+            postTweet(`https://note.com/${article_ID_list[i][0]}/n/${article_ID_list[i][1]}`);
+            last_article_ID_list.push(article_ID_list[i]);
+            if (last_article_ID_list.lenghth > 50 * HASHTAG_LIST.length){
+                last_article_ID_list.shift();
+            }
+            caches.put("article_ID_list", last_article_ID_list, 21600); // 6時間キャッシュ
+            limit_list[1] -= 1;
+        }
+    }
+    cache.put("limit", limit_list, 21600); // 6時間キャッシュ
+}

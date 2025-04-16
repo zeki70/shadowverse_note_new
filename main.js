@@ -69,6 +69,6 @@ function check_article_ID(list) {// 記事IDをチェックしミュートリス
         if (MUTE_HSSHTAG_LIST.includes(hashtags)){
             continue
         }
-        Article_ID_list.add(article_elements[1]);
+        Article_ID_list.add(article_elements);
     }
 }
