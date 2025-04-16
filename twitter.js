@@ -59,3 +59,10 @@ function postTweet(text) {
 
   Logger.log(response.getContentText());
 }
+
+function check_limit(){
+    var date = new Date();
+    var today = date.getDate();
+
+}
+
