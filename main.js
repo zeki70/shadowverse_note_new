@@ -44,14 +44,15 @@ function extractArticleIds(html) {
     const articleId = match[2]; // 記事ID (例: n002bee74621f)
     result.push([userId, articleId]);
   }
-
+    return result;
 }
 
 function get_article_ID() {// 記事IDを取得する関数
     for (i in HASHTAG_LIST) {
         var hashtag = HASHTAG_LIST[i];
         var html_list = scrapeHtml(hashtag);
-        check_article_ID(html_list);
+        var article_ID_list = extractArticleIds(html_list);
+        check_article_ID(article_ID_list);
     }
 }
 
