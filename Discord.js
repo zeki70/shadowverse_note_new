@@ -48,3 +48,7 @@ function postToDiscord(text) {
     cache.put("discord_article_ID_list", last_article_ID_list, 21600);
   }
   
+  function main(){
+    get_article_ID();
+    sendNewArticlesToDiscord(Article_ID_list);
+  }
