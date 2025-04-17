@@ -17,3 +17,33 @@ function postToDiscord(text) {
     UrlFetchApp.fetch(webhookUrl, options);
   }
   
+  function sendNewArticlesToDiscord(article_ID_list) {
+    const cache = makeCache();
+    let last_article_ID_list = cache.get("discord_article_ID_list");
+  
+    if (!last_article_ID_list) {
+      last_article_ID_list = [];
+    }
+  
+    for (const article of article_ID_list) {
+      const alreadySent = last_article_ID_list.some(
+        id => id[0] === article[0] && id[1] === article[1]
+      );
+  
+      if (alreadySent) continue;
+  
+      const url = `https://note.com/${article[0]}/n/${article[1]}`;
+      postToDiscord(url);
+  
+      last_article_ID_list.push(article);
+  
+      if (last_article_ID_list.length > 300) {
+        last_article_ID_list.shift();
+      }
+  
+      Utilities.sleep(1000); // レート制限対策
+    }
+  
+    cache.put("discord_article_ID_list", last_article_ID_list, 21600);
+  }
+  
