@@ -1,3 +1,5 @@
+const { get } = require("http");
+
 var CLIENT_ID = PropertiesService.getScriptProperties().getProperty("CLIENT_ID");
 var CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('CLIENT_SECRET');
 
@@ -94,7 +96,7 @@ function check_limit(article_ID_list) {
             continue;
         }
 
-        postTweet(`https://note.com/${article[0]}/n/${article[1]}`);
+        postTweet(`${article[2]}｜${article[3]}\nhttps://note.com/${article[0]}/n/${article[1]}`); 
         last_article_ID_list.push(article);
 
         if (last_article_ID_list.length > 50 * HASHTAG_LIST.length) {
@@ -106,4 +108,9 @@ function check_limit(article_ID_list) {
 
     cache.put("limit", limit_list, 21600);
     cache.put("article_ID_list", last_article_ID_list, 21600);
+}
+
+function main(){
+    get_article_ID();
+    check_limit(Article_ID_list);
 }
