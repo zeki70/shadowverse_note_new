@@ -1,5 +1,4 @@
-const { get } = require("http");
-
+const cache = makeCache();
 var CLIENT_ID = PropertiesService.getScriptProperties().getProperty("CLIENT_ID");
 var CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('CLIENT_SECRET');
 
