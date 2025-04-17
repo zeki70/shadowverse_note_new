@@ -38,7 +38,7 @@ function postToDiscord(text) {
   
       last_article_ID_list.push(article);
   
-      if (last_article_ID_list.length > 300) {
+      if (last_article_ID_list.length > 50 * HASHTAG_LIST.length) {
         last_article_ID_list.shift();
       }
   
