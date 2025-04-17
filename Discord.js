@@ -32,8 +32,9 @@ function postToDiscord(text) {
   
       if (alreadySent) continue;
   
-      const url = `https://note.com/${article[0]}/n/${article[1]}`;
-      postToDiscord(url);
+      var url = `https://note.com/${article[0]}/n/${article[1]}`;
+      var text = `${article[2]}｜${article[3]}\n${url}`;
+      postToDiscord(text);
   
       last_article_ID_list.push(article);
   
