@@ -34,18 +34,17 @@ function scrapeHtml(hashtag) {
 
 function extractArticleIds(html) {
   
-  // 正規表現で /<ユーザーID>/n/<記事ID> の形から記事IDだけを抜き出す
-  const regex = /\/[^\/]+\/n\/(n[0-9a-z]+)/g;
+  // 正規表現で /<ユーザーID>/n/<記事ID> を抽出
+  const regex = /\/([^\/]+)\/n\/(n[0-9a-z]+)/g;
   let match;
-  const articleIds = [];
+  const result = [];
 
   while ((match = regex.exec(html)) !== null) {
-    articleIds.push(match[1]); // 1番目のキャプチャグループ（記事ID）を追加
+    const userId = match[1];   // ユーザーID (例: kankiiiii)
+    const articleId = match[2]; // 記事ID (例: n002bee74621f)
+    result.push([userId, articleId]);
   }
-  
-  Logger.log(articleIds);
-  var sheet = SpreadsheetApp.openById(Spreadsheet_ID).getSheetByName("シート1");  // シートを直接指定
-  sheet.appendRow(articleIds);
+
 }
 
 function get_article_ID() {// 記事IDを取得する関数
