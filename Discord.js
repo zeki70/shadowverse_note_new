@@ -43,6 +43,7 @@ function postToDiscord(text) {
       }
   
       Utilities.sleep(1000); // レート制限対策
+      cache.put("discord_article_ID_list", last_article_ID_list, 21600);
     }
   
     cache.put("discord_article_ID_list", last_article_ID_list, 21600);
