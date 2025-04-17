@@ -96,7 +96,7 @@ function check_limit(article_ID_list) {
             continue;
         }
 
-        postTweet(`https://note.com/${article[0]}/n/${article[1]}`);
+        postTweet(`${article[2]}｜${article[3]}\nhttps://note.com/${article[0]}/n/${article[1]}`); 
         last_article_ID_list.push(article);
 
         if (last_article_ID_list.length > 50 * HASHTAG_LIST.length) {
