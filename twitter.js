@@ -1,3 +1,5 @@
+const { get } = require("http");
+
 var CLIENT_ID = PropertiesService.getScriptProperties().getProperty("CLIENT_ID");
 var CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('CLIENT_SECRET');
 
@@ -109,12 +111,6 @@ function check_limit(article_ID_list) {
 }
 
 function main(){
-    for (i in HASHTAG_LIST) {
-        var hashtag = HASHTAG_LIST[i];
-        var html_list = scrapeHtml(hashtag);
-        for (i in html_list){
-            var html = html_list[i];
-            var article_elements = extractArticleIds(html);
-        }
-    }
+    get_article_ID();
+    check_limit(Article_ID_list);
 }
