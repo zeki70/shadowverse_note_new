@@ -44,8 +44,6 @@ function extractArticleIds(html) {
   }
   
   Logger.log(articleIds);
-  var sheet = SpreadsheetApp.openById(Spreadsheet_ID).getSheetByName("シート1");  // シートを直接指定
-  sheet.appendRow(articleIds);
 }
 
 function get_article_ID() {// 記事IDを取得する関数
