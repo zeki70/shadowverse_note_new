@@ -4,66 +4,111 @@ const CONSUMER_KEY = PropertiesService.getScriptProperties().getProperty("CONSUM
 const CONSUMER_SECRET = PropertiesService.getScriptProperties().getProperty("CONSUMER_SECRET");
 const ACCESS_TOKEN = PropertiesService.getScriptProperties().getProperty("ACCESS_TOKEN");
 const ACCESS_TOKEN_SECRET = PropertiesService.getScriptProperties().getProperty("ACCESS_TOKEN_SECRET");
+const CLIENT_ID = PropertiesService.getScriptProperties().getProperty("CLIENT_ID");
+const CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('CLIENT_SECRET');
 
-/**
- * ツイートを投稿する関数
- */
-function postTweet(text) {
-  const tweetText = "これはOAuth1.0aを使ったテスト投稿です";
+function postTwitter(text){
 
-  const url = "https://api.twitter.com/1.1/statuses/update.json";
-  const params = {
-    status: tweetText
-  };
+  let service = getService();
+  if (service.hasAccess()) {   
+    let message = {
+      text: text
+    }
 
-  const options = {
-    method: "post",
-    muteHttpExceptions: true,
-    payload: params,
-    headers: createOAuthHeader(url, params, "POST")
-  };
+    const headers = {
+      Authorization: 'Bearer ' + service.getAccessToken()
+    }
+    const response = UrlFetchApp.fetch(endpoint2, {
+      method: "post",
+      headers,
+      muteHttpExceptions: true,
+      payload: JSON.stringify(message),
+      contentType: "application/json"
+    });
 
-  const response = UrlFetchApp.fetch(url, options);
-  Logger.log(response.getContentText());
+    const result = JSON.parse(response.getContentText());
+
+    Logger.log(JSON.stringify(result, null, 2));
+    
+  } else {
+    Logger.log("Not Authorized");
+    return null;
+  }
 }
 
-/**
- * OAuth 1.0a ヘッダー作成関数
- */
-function createOAuthHeader(url, params, method) {
-  const oauthParams = {
-    oauth_consumer_key: CONSUMER_KEY,
-    oauth_nonce: Utilities.getUuid().replace(/-/g, ''),
-    oauth_signature_method: "HMAC-SHA1",
-    oauth_timestamp: Math.floor(new Date().getTime() / 1000),
-    oauth_token: ACCESS_TOKEN,
-    oauth_version: "1.0"
-  };
 
-  const allParams = Object.assign({}, params, oauthParams);
-  const sortedKeys = Object.keys(allParams).sort();
-  const paramString = sortedKeys.map(k => encodeURIComponent(k) + "=" + encodeURIComponent(allParams[k])).join("&");
+function getService() {//認証
+  pkceChallengeVerifier();
+  const userProps = PropertiesService.getUserProperties();
+  const scriptProps = PropertiesService.getScriptProperties();
+  const clientId = scriptProps.getProperty('CLIENT_ID');
+  const clientSecret = scriptProps.getProperty('CLIENT_SECRET');
 
-  const baseString = [
-    method.toUpperCase(),
-    encodeURIComponent(url),
-    encodeURIComponent(paramString)
-  ].join("&");
-
-  const signingKey = encodeURIComponent(CONSUMER_SECRET) + "&" + encodeURIComponent(ACCESS_TOKEN_SECRET);
-  const signature = Utilities.computeHmacSha1Signature(baseString, signingKey);
-  const signatureBase64 = Utilities.base64Encode(signature);
-
-  oauthParams.oauth_signature = signatureBase64;
-
-  const authHeader = "OAuth " + Object.keys(oauthParams).map(k => {
-    return encodeURIComponent(k) + '="' + encodeURIComponent(oauthParams[k]) + '"';
-  }).join(", ");
-
-  return {
-    Authorization: authHeader
-  };
+  return OAuth2.createService('twitter')
+    .setAuthorizationBaseUrl('https://twitter.com/i/oauth2/authorize')
+    .setTokenUrl('https://api.twitter.com/2/oauth2/token?code_verifier=' + userProps.getProperty("code_verifier"))
+    .setClientId(clientId)
+    .setClientSecret(clientSecret)
+    .setCallbackFunction('authCallback')
+    .setPropertyStore(userProps)
+    .setScope('users.read tweet.read tweet.write offline.access')
+    .setParam('response_type', 'code')
+    .setParam('code_challenge_method', 'S256')
+    .setParam('code_challenge', userProps.getProperty("code_challenge"))
+    .setTokenHeaders({
+      'Authorization': 'Basic ' + Utilities.base64Encode(clientId + ':' + clientSecret),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    })
 }
+
+function authCallback(request) {
+  const service = getService();
+  const authorized = service.handleCallback(request);
+  if (authorized) {
+    return HtmlService.createHtmlOutput('Success!');
+  } else {
+    return HtmlService.createHtmlOutput('Denied.');
+  }
+}
+
+function pkceChallengeVerifier() {
+  var userProps = PropertiesService.getUserProperties();
+  if (!userProps.getProperty("code_verifier")) {
+    var verifier = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+
+    for (var i = 0; i < 128; i++) {
+      verifier += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+
+    var sha256Hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, verifier)
+
+    var challenge = Utilities.base64Encode(sha256Hash)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+    userProps.setProperty("code_verifier", verifier)
+    userProps.setProperty("code_challenge", challenge)
+  }
+}
+
+function logRedirectUri() {
+  var service = getService();
+  Logger.log(service.getRedirectUri());
+}
+
+
+function first() {//初回認証
+  const service = getService();
+  if (service.hasAccess()) {
+    Logger.log("Already authorized");
+  } else {
+    const authorizationUrl = service.getAuthorizationUrl();
+    Logger.log('Open the following URL and re-run the script: %s', authorizationUrl);
+  }
+}
+
+
 
 function check_limit(article_ID_list) {
     var limit_list = cache.get("limit");
