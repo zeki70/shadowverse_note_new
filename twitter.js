@@ -1,66 +1,114 @@
-const { get } = require("http");
+const cache = makeCache();
+// スクリプトプロパティなどから取得してもOK
+const CONSUMER_KEY = PropertiesService.getScriptProperties().getProperty("CONSUMER_KEY");
+const CONSUMER_SECRET = PropertiesService.getScriptProperties().getProperty("CONSUMER_SECRET");
+const ACCESS_TOKEN = PropertiesService.getScriptProperties().getProperty("ACCESS_TOKEN");
+const ACCESS_TOKEN_SECRET = PropertiesService.getScriptProperties().getProperty("ACCESS_TOKEN_SECRET");
+const CLIENT_ID = PropertiesService.getScriptProperties().getProperty("CLIENT_ID");
+const CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('CLIENT_SECRET');
 
-var CLIENT_ID = PropertiesService.getScriptProperties().getProperty("CLIENT_ID");
-var CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('CLIENT_SECRET');
+function postTwitter(text){
 
-/**
- * OAuth2サービスの取得
- */
-function getService() {
-  return OAuth2.createService('Twitter')
-    .setAuthorizationBaseUrl('https://twitter.com/i/oauth2/authorize')
-    .setTokenUrl('https://api.twitter.com/2/oauth2/token')
-    .setClientId(CLIENT_ID)
-    .setClientSecret(CLIENT_SECRET)
-    .setCallbackFunction('authCallback')
-    .setPropertyStore(PropertiesService.getUserProperties())
-    .setScope('tweet.write offline.access')
-    .setTokenHeaders({
-      Authorization: 'Basic ' + Utilities.base64Encode(CLIENT_ID + ':' + CLIENT_SECRET)
-    });
-}
+  let service = getService();
+  if (service.hasAccess()) {   
+    let message = {
+      text: text
+    }
 
-/**
- * 認証コールバック関数
- */
-function authCallback(request) {
-  var service = getService();
-  var isAuthorized = service.handleCallback(request);
-  if (isAuthorized) {
-    return HtmlService.createHtmlOutput('認証が完了しました。');
-  } else {
-    return HtmlService.createHtmlOutput('認証に失敗しました。');
-  }
-}
-
-/**
- * ツイートを投稿する関数
- */
-function postTweet(text) {
-  var service = getService();
-  if (!service.hasAccess()) {
-    var authorizationUrl = service.getAuthorizationUrl();
-    Logger.log('以下のURLにアクセスして認証を行ってください：\n' + authorizationUrl);
-    return;
-  }
-
-  var url = 'https://api.twitter.com/2/tweets';
-  var payload = {
-    text: text
-  };
-
-  var response = UrlFetchApp.fetch(url, {
-    method: 'post',
-    contentType: 'application/json',
-    headers: {
+    const headers = {
       Authorization: 'Bearer ' + service.getAccessToken()
-    },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
+    }
+    const response = UrlFetchApp.fetch(endpoint2, {
+      method: "post",
+      headers,
+      muteHttpExceptions: true,
+      payload: JSON.stringify(message),
+      contentType: "application/json"
+    });
 
-  Logger.log(response.getContentText());
+    const result = JSON.parse(response.getContentText());
+
+    Logger.log(JSON.stringify(result, null, 2));
+    
+  } else {
+    Logger.log("Not Authorized");
+    return null;
+  }
 }
+
+
+function getService() {//認証
+  pkceChallengeVerifier();
+  const userProps = PropertiesService.getUserProperties();
+  const scriptProps = PropertiesService.getScriptProperties();
+  const clientId = scriptProps.getProperty('CLIENT_ID');
+  const clientSecret = scriptProps.getProperty('CLIENT_SECRET');
+
+  return OAuth2.createService('twitter')
+    .setAuthorizationBaseUrl('https://twitter.com/i/oauth2/authorize')
+    .setTokenUrl('https://api.twitter.com/2/oauth2/token?code_verifier=' + userProps.getProperty("code_verifier"))
+    .setClientId(clientId)
+    .setClientSecret(clientSecret)
+    .setCallbackFunction('authCallback')
+    .setPropertyStore(userProps)
+    .setScope('users.read tweet.read tweet.write offline.access')
+    .setParam('response_type', 'code')
+    .setParam('code_challenge_method', 'S256')
+    .setParam('code_challenge', userProps.getProperty("code_challenge"))
+    .setTokenHeaders({
+      'Authorization': 'Basic ' + Utilities.base64Encode(clientId + ':' + clientSecret),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    })
+}
+
+function authCallback(request) {
+  const service = getService();
+  const authorized = service.handleCallback(request);
+  if (authorized) {
+    return HtmlService.createHtmlOutput('Success!');
+  } else {
+    return HtmlService.createHtmlOutput('Denied.');
+  }
+}
+
+function pkceChallengeVerifier() {
+  var userProps = PropertiesService.getUserProperties();
+  if (!userProps.getProperty("code_verifier")) {
+    var verifier = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+
+    for (var i = 0; i < 128; i++) {
+      verifier += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+
+    var sha256Hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, verifier)
+
+    var challenge = Utilities.base64Encode(sha256Hash)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+    userProps.setProperty("code_verifier", verifier)
+    userProps.setProperty("code_challenge", challenge)
+  }
+}
+
+function logRedirectUri() {
+  var service = getService();
+  Logger.log(service.getRedirectUri());
+}
+
+
+function first() {//初回認証
+  const service = getService();
+  if (service.hasAccess()) {
+    Logger.log("Already authorized");
+  } else {
+    const authorizationUrl = service.getAuthorizationUrl();
+    Logger.log('Open the following URL and re-run the script: %s', authorizationUrl);
+  }
+}
+
+
 
 function check_limit(article_ID_list) {
     var limit_list = cache.get("limit");
@@ -96,7 +144,7 @@ function check_limit(article_ID_list) {
             continue;
         }
 
-        postTweet(`https://note.com/${article[0]}/n/${article[1]}`);
+        postTweet(`${article[2]}｜${article[3]}\nhttps://note.com/${article[0]}/n/${article[1]}`); 
         last_article_ID_list.push(article);
 
         if (last_article_ID_list.length > 50 * HASHTAG_LIST.length) {
