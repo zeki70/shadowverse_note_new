@@ -6,6 +6,7 @@ const ACCESS_TOKEN = PropertiesService.getScriptProperties().getProperty("ACCESS
 const ACCESS_TOKEN_SECRET = PropertiesService.getScriptProperties().getProperty("ACCESS_TOKEN_SECRET");
 const CLIENT_ID = PropertiesService.getScriptProperties().getProperty("CLIENT_ID");
 const CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('CLIENT_SECRET');
+const endpoint2 = "https://api.twitter.com/2/tweets";
 
 function postTwitter(text){
 
