@@ -1,64 +1,68 @@
 const cache = makeCache();
-var CLIENT_ID = PropertiesService.getScriptProperties().getProperty("CLIENT_ID");
-var CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('CLIENT_SECRET');
-
-/**
- * OAuth2サービスの取得
- */
-function getService() {
-  return OAuth2.createService('Twitter')
-    .setAuthorizationBaseUrl('https://twitter.com/i/oauth2/authorize')
-    .setTokenUrl('https://api.twitter.com/2/oauth2/token')
-    .setClientId(CLIENT_ID)
-    .setClientSecret(CLIENT_SECRET)
-    .setCallbackFunction('authCallback')
-    .setPropertyStore(PropertiesService.getUserProperties())
-    .setScope('tweet.write offline.access')
-    .setTokenHeaders({
-      Authorization: 'Basic ' + Utilities.base64Encode(CLIENT_ID + ':' + CLIENT_SECRET)
-    });
-}
-
-/**
- * 認証コールバック関数
- */
-function authCallback(request) {
-  var service = getService();
-  var isAuthorized = service.handleCallback(request);
-  if (isAuthorized) {
-    return HtmlService.createHtmlOutput('認証が完了しました。');
-  } else {
-    return HtmlService.createHtmlOutput('認証に失敗しました。');
-  }
-}
+// スクリプトプロパティなどから取得してもOK
+const CONSUMER_KEY = PropertiesService.getScriptProperties().getProperty("CONSUMER_KEY");
+const CONSUMER_SECRET = PropertiesService.getScriptProperties().getProperty("CONSUMER_SECRET");
+const ACCESS_TOKEN = PropertiesService.getScriptProperties().getProperty("ACCESS_TOKEN");
+const ACCESS_TOKEN_SECRET = PropertiesService.getScriptProperties().getProperty("ACCESS_TOKEN_SECRET");
 
 /**
  * ツイートを投稿する関数
  */
 function postTweet(text) {
-  var service = getService();
-  if (!service.hasAccess()) {
-    var authorizationUrl = service.getAuthorizationUrl();
-    Logger.log('以下のURLにアクセスして認証を行ってください：\n' + authorizationUrl);
-    return;
-  }
+  const tweetText = "これはOAuth1.0aを使ったテスト投稿です";
 
-  var url = 'https://api.twitter.com/2/tweets';
-  var payload = {
-    text: text
+  const url = "https://api.twitter.com/1.1/statuses/update.json";
+  const params = {
+    status: tweetText
   };
 
-  var response = UrlFetchApp.fetch(url, {
-    method: 'post',
-    contentType: 'application/json',
-    headers: {
-      Authorization: 'Bearer ' + service.getAccessToken()
-    },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
+  const options = {
+    method: "post",
+    muteHttpExceptions: true,
+    payload: params,
+    headers: createOAuthHeader(url, params, "POST")
+  };
 
+  const response = UrlFetchApp.fetch(url, options);
   Logger.log(response.getContentText());
+}
+
+/**
+ * OAuth 1.0a ヘッダー作成関数
+ */
+function createOAuthHeader(url, params, method) {
+  const oauthParams = {
+    oauth_consumer_key: CONSUMER_KEY,
+    oauth_nonce: Utilities.getUuid().replace(/-/g, ''),
+    oauth_signature_method: "HMAC-SHA1",
+    oauth_timestamp: Math.floor(new Date().getTime() / 1000),
+    oauth_token: ACCESS_TOKEN,
+    oauth_version: "1.0"
+  };
+
+  const allParams = Object.assign({}, params, oauthParams);
+  const sortedKeys = Object.keys(allParams).sort();
+  const paramString = sortedKeys.map(k => encodeURIComponent(k) + "=" + encodeURIComponent(allParams[k])).join("&");
+
+  const baseString = [
+    method.toUpperCase(),
+    encodeURIComponent(url),
+    encodeURIComponent(paramString)
+  ].join("&");
+
+  const signingKey = encodeURIComponent(CONSUMER_SECRET) + "&" + encodeURIComponent(ACCESS_TOKEN_SECRET);
+  const signature = Utilities.computeHmacSha1Signature(baseString, signingKey);
+  const signatureBase64 = Utilities.base64Encode(signature);
+
+  oauthParams.oauth_signature = signatureBase64;
+
+  const authHeader = "OAuth " + Object.keys(oauthParams).map(k => {
+    return encodeURIComponent(k) + '="' + encodeURIComponent(oauthParams[k]) + '"';
+  }).join(", ");
+
+  return {
+    Authorization: authHeader
+  };
 }
 
 function check_limit(article_ID_list) {
