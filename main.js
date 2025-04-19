@@ -6,7 +6,7 @@
 const HASHTAG_LIST = ['Shadowverse', 'シャドバ', 'シャドウバース', '2pick'];
 
 // ミュートハッシュタグリスト（タイトル、ハッシュタグ、作者名に対して）
-const MUTE_HSSHTAG_LIST = ['シャドウバースエボルヴ', 'Shadowverse_EVOLVE'];
+const MUTE_HSSHTAG_LIST = ['#シャドウバースエボルヴ', '#Shadowverse_EVOLVE'];
 
 const MUTE_USER_LIST = []
 
@@ -65,7 +65,8 @@ function check_article_ID(list) {// 記事IDをチェックしミュートリス
         var hashtag_url = `https://note.com/api/v3/notes/${article_elements[1]}`;
         let jsonArticleInfo = UrlFetchApp.fetch(hashtag_url, {'method':'get'});
         var parsedData = JSON.parse(jsonArticleInfo);
-        var hashtags = parsedData.data.hashtag_notes;
+        var hashtags = parsedData.data.hashtag_notes.map(entry => entry.hashtag?.name).filter(Boolean);
+  
         if (MUTE_HSSHTAG_LIST.includes(hashtags)){
             continue
         }
